@@ -45,7 +45,11 @@
         fixed
         :items="table"
         :filter="filter"
-      ></b-table>
+      >
+      <template v-slot:cell(imageURL)="data">
+        <img :src="data.item.imageURL" />
+      </template>
+      </b-table>
     </b-container>
     <div v-if="loading" class="loader">
       <b-spinner label="Loading..."></b-spinner>
@@ -57,6 +61,11 @@
 const URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vSCKaOZPrqm4bIptb6HUtqdBtOyeq0IrJ88sAdD0J0CB0CdpYveWi7iNVHstUP2q2E9Vj_G191nApV1/pub?gid=0&single=true&output=csv'
 
+function convertSignName(signName) {
+  signName = signName.toUpperCase();
+  return signName.replace(/~/g,"-")
+}
+
 function parseData(csv) {
   const lines = csv.split('\n')
   const headers = lines[0].split(',')
@@ -66,6 +75,12 @@ function parseData(csv) {
     let currentLine = lines[i].split(',')
     for (let j = 0; j < headers.length; j++) {
       row[headers[j]] = currentLine[j]
+      try {
+      row['imageURL'] = require(`./assets/signs/${convertSignName(row['Sign (Dahl)'])}.png`);
+      } catch (e) {
+        console.log(e);
+        row['imageURL'] = require('./assets/signs/empty.png');
+      }
     }
     body.push(row)
   }
