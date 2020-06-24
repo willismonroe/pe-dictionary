@@ -17,13 +17,10 @@
                 type="text"
                 id="filterInput"
                 placeholder="Type to filter, Enter to submit"
-                v-on:keyup.enter="filter = filterInput"
+                v-on:keyup.enter="setFilter"
               ></b-form-input>
               <b-input-group-append>
-                <b-button
-                  :disabled="!filterInput"
-                  @click="filter = filterInput"
-                >
+                <b-button :disabled="!filterInput" @click="setFilter">
                   Filter
                 </b-button>
                 <b-button :disabled="!filterInput" @click="clearFilter">
@@ -128,6 +125,12 @@ export default {
       })
   },
   methods: {
+    setFilter() {
+      this.loading = true
+      setTimeout(() => {
+        this.filter = this.filterInput
+      })
+    },
     clearFilter() {
       this.filter = ''
       this.filterInput = ''
@@ -135,6 +138,7 @@ export default {
     onFiltered(filteredItems) {
       this.totalRows = filteredItems.length
       this.currentPage = 1
+      this.loading = false
     },
   },
 }
