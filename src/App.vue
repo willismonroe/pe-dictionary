@@ -14,7 +14,7 @@
             <b-input-group size="sm">
               <b-form-input
                 v-model="filterInput"
-                type="search"
+                type="text"
                 id="filterInput"
                 placeholder="Type to filter, Enter to submit"
                 v-on:keyup.enter="filter = filterInput"
@@ -38,17 +38,30 @@
         </b-col>
       </b-row>
 
+      <b-pagination
+        v-model="currentPage"
+        :total-rows="totalRows"
+        :per-page="perPage"
+        align="fill"
+        size="sm"
+        class="my-0"
+      ></b-pagination>
+
       <b-table
         striped
         hover
         small
         fixed
+        primary-key="index"
+        :per-page="perPage"
+        :current-page="currentPage"
         :items="table"
         :filter="filter"
+        @filtered="onFiltered"
       >
-      <template v-slot:cell(imageURL)="data">
-        <img :src="data.item.imageURL" />
-      </template>
+        <template v-slot:cell(imageURL)="data">
+          <img :src="data.item.imageURL" />
+        </template>
       </b-table>
     </b-container>
     <div v-if="loading" class="loader">
@@ -62,8 +75,8 @@ const URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vSCKaOZPrqm4bIptb6HUtqdBtOyeq0IrJ88sAdD0J0CB0CdpYveWi7iNVHstUP2q2E9Vj_G191nApV1/pub?gid=0&single=true&output=csv'
 
 function convertSignName(signName) {
-  signName = signName.toUpperCase();
-  return signName.replace(/~/g,"-")
+  signName = signName.toUpperCase()
+  return signName.replace(/~/g, '-')
 }
 
 function parseData(csv) {
@@ -74,12 +87,15 @@ function parseData(csv) {
     let row = {}
     let currentLine = lines[i].split(',')
     for (let j = 0; j < headers.length; j++) {
+      row['index'] = i
       row[headers[j]] = currentLine[j]
       try {
-      row['imageURL'] = require(`./assets/signs/${convertSignName(row['Sign (Dahl)'])}.png`);
+        row['imageURL'] = require(`./assets/signs/${convertSignName(
+          row['Sign (Dahl)'],
+        )}.png`)
       } catch (e) {
-        console.log(e);
-        row['imageURL'] = require('./assets/signs/empty.png');
+        // console.log(e)
+        row['imageURL'] = require('./assets/signs/empty.png')
       }
     }
     body.push(row)
@@ -91,10 +107,13 @@ export default {
   name: 'App',
   data() {
     return {
-      table: null,
+      table: [],
       loading: true,
       filterInput: '',
       filter: null,
+      perPage: 25,
+      currentPage: 1,
+      totalRows: 1,
     }
   },
   created() {
@@ -105,12 +124,17 @@ export default {
       .then((res) => {
         this.table = parseData(res)
         this.loading = false
+        this.totalRows = this.table.length
       })
   },
   methods: {
     clearFilter() {
       this.filter = ''
       this.filterInput = ''
+    },
+    onFiltered(filteredItems) {
+      this.totalRows = filteredItems.length
+      this.currentPage = 1
     },
   },
 }
